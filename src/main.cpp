@@ -139,6 +139,10 @@ String presiunea_locala;
 String viteza_vantului_locala;
 String nebulozitate;
 String umezeala;
+String fenomene_electrice;
+String zapada;
+String actualizat;
+
 String busvoltage_s;
 float busvoltage_f;
 Adafruit_INA219 ina219;
@@ -303,41 +307,42 @@ void loop()
   /*Title */
   display.setFont(&FreeMono9pt7b);
   display.setCursor(2, 40);
-  // display.print("Sala: ");
+
   // display.printf("(%d dBm) (%d)", WiFi.RSSI(), getWifiStrenght());
-  if(data_meteo.isEmpty()== true)
+  if((data_meteo !="null")/* || (data_meteo.isEmpty()==false)*/)
   {
     display.println("Sibiu:" + rtc.getTime("%Y-%m-%d"));
+
+    /* Content*/
+    display.setFont(&FreeMono9pt7b);
+    display.println(CheckString("Temperatura:" + temperatura_locala + " C", temperatura_locala));
+    display.setCursor(2, 73);
+    display.println(CheckString(presiunea_locala, presiunea_locala) );
+    display.setCursor(2, 87);
+
+    display.println(CheckString(viteza_vantului_locala, viteza_vantului_locala) +
+                    CheckString(" Umezeala:" + umezeala + "%", umezeala));
+
+    //display.println("" + viteza_vantului_locala + " Umezeala:" + umezeala + "%" );
+
+    /* Footer*/
+    display.setFont(&FreeMono9pt7b);
+    display.setCursor(2, 123);
+    display.print("");
+    if(busvoltage_f>1.0)
+    {
+      display.println(CheckString(nebulozitate, nebulozitate) + " V:" + busvoltage_s);
+    }
+    else
+    {
+      display.println(CheckString(nebulozitate, nebulozitate));
+    }
   }
   else
   {
 
-    //display.println("Sibiu:" + rtc.getTime("%d-%m-%Y"));
-    display.println("Sibiu: "+data_meteo.substring(0,10));
-  }
-  /* Content*/
-  display.setFont(&FreeMono9pt7b);
-  display.println(CheckString("Temperatura:" + temperatura_locala + " C", temperatura_locala));
-  display.setCursor(2, 73);
-  display.println(CheckString(presiunea_locala, presiunea_locala) );
-  display.setCursor(2, 87);
-
-  display.println(CheckString(viteza_vantului_locala, viteza_vantului_locala) +
-                  CheckString(" Umezeala:" + umezeala + "%", umezeala));
-
-  //display.println("" + viteza_vantului_locala + " Umezeala:" + umezeala + "%" );
-
-  /* Footer*/
-  display.setFont(&FreeMono9pt7b);
-  display.setCursor(2, 123);
-  display.print("");
-  if(busvoltage_f>1.0)
-  {
-    display.println(CheckString(nebulozitate, nebulozitate) + " V:" + busvoltage_s);
-  }
-  else
-  {
-    display.println(CheckString(nebulozitate, nebulozitate));
+   display.println("Sibiu:" + rtc.getTime("%d-%m-%Y"));
+   display.println("Informatiile meteo sunt indisponibile ! ");
   }
   display.update();
 
@@ -524,27 +529,31 @@ void SecureClientRead()
           // file found at server
           if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
           {
-            String payload = https.getString();
+           // String payload = https.getString();
+           // Serial.println(payload);
             // Parse response
             DynamicJsonDocument doc(65000);
-            DynamicJsonDocument doc_sibiu(2048);
-
+            DynamicJsonDocument doc_sibiu(2000);
             deserializeJson(doc, https.getStream());
+            //Serial.println(doc["features"][1].as<String>());
             doc_sibiu = doc["features"][72];
             deserializeJson(doc_sibiu, doc["features"][72].as<String>());
             // Read values
+            data_meteo = doc["date"].as<String>();
+#ifdef SERIAL_DEBUG_ON
             Serial.println(doc["features"][72].as<String>());
             Serial.println(doc_sibiu["properties"]["tempe"].as<String>());
-
-            data_meteo = doc["date"].as<String>();
             Serial.println(doc["date"].as<String>());
+ #endif
             temperatura_locala = doc_sibiu["properties"]["tempe"].as<String>();
             presiunea_locala = doc_sibiu["properties"]["presiunetext"].as<String>();
             viteza_vantului_locala = doc_sibiu["properties"]["vant"].as<String>();
             nebulozitate = doc_sibiu["properties"]["nebulozitate"].as<String>();
             umezeala = doc_sibiu["properties"]["umezeala"].as<String>();
-
-          }
+            fenomene_electrice = doc_sibiu["properties"]["fenomen_e"].as<String>();
+            zapada = doc_sibiu["properties"]["zapada"].as<String>();
+            actualizat = doc_sibiu["properties"]["actualizat"].as<String>();
+                                          }
         }
         else
         {
@@ -605,9 +614,9 @@ void batteryRead(void)
 
 String CheckString(String name, String str)
 {
-  if (str.isEmpty() == true)
+  if ((str == "null") || (str.isEmpty() == true) || (str == "indisponibil"))
   {
-    return "Info meteo indisponibile";
+    return "Info indisponibila!";
   }
   else
   {
