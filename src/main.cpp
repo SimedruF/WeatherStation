@@ -88,8 +88,8 @@ void batteryRead(void);
 String CheckString(String name, String str);
 
 /* Put your SSID & Password */
-const char *ssid = "AC0571";         // Enter SSID here
-const char *password = "120479wifi"; // Enter Password here
+const char *ssid = "";         // Enter SSID here
+const char *password = ""; // Enter Password here
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 7200;
 const int daylightOffset_sec = 3600;
